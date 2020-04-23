@@ -1,3 +1,4 @@
+using System.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using MailKit.Net.Smtp;
 
 namespace EmailHandlerApi {
     public class Startup {
@@ -26,6 +28,7 @@ namespace EmailHandlerApi {
             services.AddOptions ();
             services.Configure<EmailConfig> (Configuration.GetSection ("EmailConfiguration"));
             services.AddTransient<IEmailService, EmailService> ();
+            services.AddSingleton<SmtpClient>();
             services.AddSwaggerGen (c => {
                 c.SwaggerDoc ("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
             });
@@ -38,7 +41,7 @@ namespace EmailHandlerApi {
             }
             app.UseSwagger ();
             app.UseSwaggerUI (c => {
-                c.SwaggerEndpoint ("/swagger/v1/swagger.json", "My API V1");
+                c.SwaggerEndpoint ("/swagger/v1/swagger.json", "Email Api v1");
                 c.RoutePrefix = string.Empty;
             });
             app.UseHttpsRedirection ();
