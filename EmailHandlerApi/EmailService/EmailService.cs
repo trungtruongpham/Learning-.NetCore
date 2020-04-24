@@ -30,6 +30,7 @@ namespace EmailHandlerApi
             {
                 var emailMessage = new MimeMessage();
                 var bodyBuilder = new BodyBuilder();
+                
 
                 emailMessage.From.Add(new MailboxAddress(_emailConfig.Value.FromName, _emailConfig.Value.FromAddress));
                 emailMessage.To.Add(new MailboxAddress(toName, toEmail));
@@ -37,8 +38,8 @@ namespace EmailHandlerApi
                 emailMessage.Body = new TextPart(TextFormat.Html) { Text = message };
                 bodyBuilder.HtmlBody = "<h1>test</h1>";
 
-                _smtpClient.ServerCertificateValidationCallback = (s, c, h, e) => true;
-                await _smtpClient.ConnectAsync(_emailConfig.Value.MailServerAddress, Convert.ToInt32(_emailConfig.Value.MailServerPort), SecureSocketOptions.Auto).ConfigureAwait(false);
+                 _smtpClient.ServerCertificateValidationCallback = (s, c, h, e) => true;
+                await _smtpClient.ConnectAsync(_smtpClient.LocalDomain, Convert.ToInt32(_emailConfig.Value.MailServerPort), SecureSocketOptions.Auto).ConfigureAwait(false);
                 await _smtpClient.AuthenticateAsync(new NetworkCredential(_emailConfig.Value.UserID, _emailConfig.Value.UserPassword));
                 await _smtpClient.SendAsync(emailMessage).ConfigureAwait(false);
                 await _smtpClient.DisconnectAsync(true).ConfigureAwait(false);
