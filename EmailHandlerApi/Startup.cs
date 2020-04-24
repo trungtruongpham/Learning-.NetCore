@@ -26,18 +26,23 @@ namespace EmailHandlerApi
         {
             services.AddControllers();
             services.AddOptions();
-            services.Configure<EmailConfig>(Configuration.GetSection("EmailConfiguration"));
             services.AddTransient<IEmailService, EmailService>();
             services.AddSingleton<SmtpClient>((serviceProvider) =>
             {
                 var config = serviceProvider.GetRequiredService<IConfiguration>();
-                return new SmtpClient(){
-                    LocalDomain = config.GetValue<string>("EmailConfiguration:MailServerAddress"),
+                var host = config.GetValue<string>("EmailConfiguration:MailServerAddress");
+                var port = config.GetValue<string>("EmailConfiguration:MailServerPort");
+                var r = new NetworkCredential(config.GetValue<string>("EmailConfiguration:UserId"), config.GetValue<string>("EmailConfiguration:UserPassword"));
+
+                var smtp = new SmtpClient()
+                {
+
                 };
 
-                //smtp.ServerCertificateValidationCallback = (s, c, h, e) => true;
-                //smtp.ConnectAsync(config.GetValue<string>("EmailConfiguration:MailServerAddress"), Convert.ToInt32(config.GetValue<string>("EmailConfiguration:MailServerPort")), SecureSocketOptions.Auto).ConfigureAwait(false);
-                //smtp.AuthenticateAsync(new NetworkCredential(config.GetValue<string>("EmailConfiguration:UserId"), config.GetValue<string>("EmailConfiguration:UserPassword")));
+                smtp.ServerCertificateValidationCallback = (s, c, h, e) => true;
+                smtp.Connect(host, Convert.ToInt32(port));
+                smtp.Authenticate(r);
+                return smtp;
             });
 
             services.AddSwaggerGen(c =>
@@ -68,13 +73,15 @@ namespace EmailHandlerApi
             app.UseRouting();
 
             app.UseAuthorization();
+            app.UseStaticFiles();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
 
-            applicationLifetime.ApplicationStopping.Register(() => {
+            applicationLifetime.ApplicationStopping.Register(() =>
+            {
                 var serviceProvider = app.ApplicationServices;
 
                 var smtpClient = serviceProvider.GetService<SmtpClient>();
